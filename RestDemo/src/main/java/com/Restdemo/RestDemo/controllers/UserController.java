@@ -1,51 +1,63 @@
 package com.Restdemo.RestDemo.controllers;
 
-
 import com.Restdemo.RestDemo.Service.UserService;
 import com.Restdemo.RestDemo.dto.Createuserdto;
-import com.Restdemo.RestDemo.dto.Userdto;
-import org.apache.coyote.Response;
+import com.Restdemo.RestDemo.entity.User;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/users")
+public class UserController{
     private final UserService userservice;
 
-    public UserController(UserService userservice) {
+    public UserController(UserService userservice){
         this.userservice = userservice;
     }
 
+    @PostMapping
+    public ResponseEntity<?> creatuser(@RequestBody Createuserdto dto){
+        try{
+            User user = userservice.createuser(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @GetMapping
-    public List<Userdto> getallusers() {
-        return this.userservice.getallusers();
+    public ResponseEntity<List<User>> getallusers(){
+        return ResponseEntity.ok(userservice.getallusers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Userdto> getuserbyid(@PathVariable String id) {
-        return ResponseEntity.status(HttpStatus.OK).body(userservice.getuserbyid(id));
-    }
+    public ResponseEntity<?>getuserbyid(@PathVariable UUID id){
+        try{
+            User user = userservice.getuserbyid(id);
+            if(user == null){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
 
-    @PostMapping
-    public ResponseEntity<Userdto> createuser(@RequestBody Createuserdto createuserdto){
-        return ResponseEntity.status(HttpStatus.CREATED).body(userservice.createuser(createuserdto));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Userdto> updateuser(@RequestBody Createuserdto updateuserdto, @PathVariable String id){
-        return ResponseEntity.status(HttpStatus.OK).body(userservice.updateuser(updateuserdto,id));
+            return ResponseEntity.ok(user);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteuserbyid(@PathVariable String id) {
-        userservice.deleteuserbyid(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteuser(@PathVariable UUID id) {
+        try {
+            userservice.deleteuser(id);
+            return ResponseEntity.noContent().build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
     }
-
 }
-
